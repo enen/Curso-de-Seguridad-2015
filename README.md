@@ -25,6 +25,6 @@ Podéis trabajar juntos y ayudaros unos a otros, lo que nos interesa es que preg
 
 - [Tutorial de Iptables por BodhiZazen](http://bodhizazen.net/Tutorials/iptables) (Inglés).
 - [Guí­a de defensa contra ataques de Denegación de Servicio Distribuidos](http://www.gigenn.net/IPtables/) (Inglés).
-- Wiki del curso.
+- [Wiki del curso](https://github.com/HugoJH/Curso-de-Seguridad-2015/wiki).
 
 
