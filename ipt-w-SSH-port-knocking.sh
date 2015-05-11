@@ -11,6 +11,8 @@ INT8=enp0s10
 PORT1=49013
 PORT2=36027
 PORT3=51039
+PORT4=11042
+PORT5=28051
 PORTSSH=62025
 
 # Establece la politica por defecto de las cadenas INPUT,
@@ -34,6 +36,8 @@ $IPT -N KNOCKING
 $IPT -N GATE1
 $IPT -N GATE2
 $IPT -N GATE3
+$IPT -N GATE4
+$IPT -N GATE5
 $IPT -N PASSED
 
 # -------------------------------------------------------
@@ -59,9 +63,11 @@ $IPT -A INPUT -j KNOCKING
 # -------------------------------------------------------
 
 # La puerta se abre durante 10s al recibir un paquete con etiqueta AUTH3
-$IPT -A KNOCKING -m recent --rcheck --seconds 10 --name AUTH3 -j PASSED
+$IPT -A KNOCKING -m recent --rcheck --seconds 10 --name AUTH5 -j PASSED
 
 # Da 2s entre cada toque para pasar a la siguiente puerta
+$IPT -A KNOCKING -m recent --rcheck --seconds 2 --name AUTH4 -j GATE5
+$IPT -A KNOCKING -m recent --rcheck --seconds 2 --name AUTH3 -j GATE4
 $IPT -A KNOCKING -m recent --rcheck --seconds 2 --name AUTH2 -j GATE3
 $IPT -A KNOCKING -m recent --rcheck --seconds 2 --name AUTH1 -j GATE2
 
@@ -111,12 +117,40 @@ $IPT -A GATE3 -j GATE1
 
 
 # -------------------------------------------------------
-# La puerta queda abierta (PASSED) en el PORTSSH
+# En la puerta 4 ...
 # -------------------------------------------------------
 
 # Elimina la etiqueta AUTH3 para evitar bug por escaneo 
-#$IPT -A PASSED -j LOG --log-prefix 'SECURITY LEVEL3 PASSED: '
-$IPT -A PASSED -m recent --name AUTH3 --remove
+#$IPT -A GATE4 -j LOG --log-prefix 'SECURITY LEVEL3 PASSED: '
+$IPT -A GATE4 -m recent --name AUTH3 --remove
+
+# Comprueba si se llama a PORT4 para añadir la etiqueta AUTH4
+$IPT -A GATE4 -p tcp --dport $PORT4 -m recent --name AUTH4 --set -j DROP
+
+# En otro caso devuelve el cliente a la puerta 1
+$IPT -A GATE4 -j GATE1 
+
+# -------------------------------------------------------
+# En la puerta 5 ...
+# -------------------------------------------------------
+
+# Elimina la etiqueta AUTH4 para evitar bug por escaneo 
+#$IPT -A GATE5 -j LOG --log-prefix 'SECURITY LEVEL4 PASSED: '
+$IPT -A GATE5 -m recent --name AUTH4 --remove
+
+# Comprueba si se llama a PORT5 para añadir la etiqueta AUTH5
+$IPT -A GATE5 -p tcp --dport $PORT5 -m recent --name AUTH5 --set -j DROP
+
+# En otro caso devuelve el cliente a la puerta 1
+$IPT -A GATE5 -j GATE1 
+
+# -------------------------------------------------------
+# La puerta queda abierta (PASSED) en el PORTSSH
+# -------------------------------------------------------
+
+# Elimina la etiqueta AUTH5 para evitar bug por escaneo 
+#$IPT -A PASSED -j LOG --log-prefix 'SECURITY LEVEL5 PASSED: '
+$IPT -A PASSED -m recent --name AUTH5 --remove
 
 # Acepta la conexion SSH en el PORTSSH
 $IPT -A PASSED -p tcp --dport $PORTSSH -j ACCEPT
